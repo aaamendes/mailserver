@@ -1,0 +1,14 @@
+---
+# defaults file for mailserver
+
+debug: true
+certbot_cmd: >-
+  certbot
+  certonly
+  {{ certbot_flags }}
+  -m {{ certbot_email }}
+  -d {{ mxdomain }}
+
+dkim_keys_dir: "/etc/opendkim/keys"
+# Adjust if necessary.
+postfix_chroot_script: /usr/share/doc/postfix/examples/chroot-setup/LINUX2

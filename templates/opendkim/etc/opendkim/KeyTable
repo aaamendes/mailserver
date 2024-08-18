@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+
+# OPENDKIM KEY TABLE
+# To use this file, uncomment the #KeyTable option in /etc/opendkim.conf,
+# then uncomment the following line and replace example.com with your domain
+# name, then restart OpenDKIM. Additional keys may be added on separate lines.
+
+#default._domainkey.example.com example.com:default:/etc/opendkim/keys/default.private
+{{ dkim_selector }}._domainkey.{{ domain }} {{ domain }}:{{ dkim_selector }}:/etc/opendkim/keys/{{ domain }}/{{ dkim_selector }}.private

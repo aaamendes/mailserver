@@ -1,0 +1,30 @@
+---
+# vars file for mailserver
+
+debug: true
+
+###########################################################################
+#   Letsencrypt                                                           #
+###########################################################################
+mxdomain: mail.yourdomain.com
+# Cut subdomain for variable {{ domain }}.
+domain: "{{ mxdomain | regex_replace('^.+?\\.(.*)', '\\1') }}"
+# Set your email with certbot here.
+certbot_email: certbot@yourdomain.com
+# Adjust to your liking (must not be interactive).
+certbot_flags: >-
+  --standalone
+  --agree-tos
+  --keep-until-expiring
+# --dry-run
+
+###########################################################################
+#   DKIM                                                                  #
+###########################################################################
+dkim_selector: mail
+
+###########################################################################
+#   Dovecot                                                               #
+###########################################################################
+fullchain_path: "/etc/letsencrypt/live/{{ mxdomain }}/fullchain.pem"
+privkey_path: "/etc/letsencrypt/live/{{ mxdomain }}/privkey.pem"

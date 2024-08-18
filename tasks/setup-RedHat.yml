@@ -1,0 +1,186 @@
+---
+# setup-RedHat.yml
+
+###########################################################################
+#   Install packages                                                      #
+###########################################################################
+- name: Install packages for RedHat
+  ansible.builtin.package:
+    name:
+      - certbot
+      - postfix
+      - pypolicyd-spf
+      - dovecot
+      - opendkim
+      - opendkim-tools
+    state:
+      present
+
+###########################################################################
+#   Letsencrypt                                                           #
+###########################################################################
+- name: DEBUG - vars for certbot
+  ansible.builtin.debug:
+    msg:
+      - "domain: {{ domain }}"
+      - "mxdomain: {{ mxdomain }}"
+      - "certbot_cmd: {{ certbot_cmd }}"
+  when: debug | bool
+
+- name: Get certificate
+  ansible.builtin.shell: "{{ certbot_cmd }}"
+  register: certbot_out
+
+- name: Certbot output
+  ansible.builtin.debug:
+    msg: "{{ certbot_out.stdout }}"
+
+
+###########################################################################
+#   Create users                                                          #
+###########################################################################
+- name: Create users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    shell: "{{ item.shell }}"
+    create_home: "{{ item.create_home }}"
+    groups: "{{ item.groups if item.groups is defined else '' }}"
+  with_items:
+    - {
+      "name": "policyd-spf",
+      "shell": "/bin/false",
+      "create_home": false
+    }
+
+###########################################################################
+#   Create directories                                                    #
+###########################################################################
+- name: Create directories
+  file:
+    path: "{{ item.dir }}"
+    owner: "{{ item.owner if item.owner is defined else 'root' }}"
+    group: "{{ item.group if item.group is defined else 'root' }}"
+    state: directory
+  with_items:
+    - {
+      "dir": "{{ dkim_keys_dir }}",
+      "owner": "opendkim",
+      "group": "opendkim"
+    }
+    - {
+      "dir": "{{ dkim_keys_dir }}/{{ domain }}",
+      "owner": "opendkim",
+      "group": "opendkim"
+    }
+
+###########################################################################
+#   Exec /usr/share/doc/postfix/examples/chroot-setup/LINUX2              #
+#   to setup a chroot for postfix.                                        #
+#   Adjust the path in defaults/main.yml if necessary.                    #
+###########################################################################
+- name: Setup chroot for postfix
+  ansible.builtin.file:
+    path: "{{ postfix_chroot_script }}"
+    mode: '0740'
+
+- name: Exec postfix chroot script
+  shell: "{{ postfix_chroot_script }}"
+  register: chroot_script_out
+
+- name: chroot-script output
+  ansible.builtin.debug:
+    msg: "{{ chroot_script_out.stdout }}"
+
+###########################################################################
+#   DKIM - Generate key pair                                              #
+#   (                                                                     #
+#       It's always a good idea to create a new one (                     #
+#           don't forget your TXT record!                                 #
+#       ).                                                                #
+#   ).                                                                    #
+###########################################################################
+- name: DKIM - Generate key pair
+  ansible.builtin.shell: >
+    opendkim-genkey
+    -b 1024
+    -d {{ domain }}
+    -D {{ dkim_keys_dir }}/{{ domain }}
+    -s {{ dkim_selector }}
+    -v
+
+- name: Chown key pair
+  ansible.builtin.file:
+    path: "/etc/opendkim/keys/{{ domain }}/{{ item }}"
+    owner: root
+    group: opendkim
+    mode: '0640'
+  with_items:
+    - "{{ dkim_selector }}.private"
+    - "{{ dkim_selector }}.txt"
+
+###########################################################################
+#   Templates                                                             #
+###########################################################################
+- name: Templates
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner if item.owner is defined else 'root' }}"
+    group: "{{ item.group if item.group is defined else 'root' }}"
+    mode: "{{ item.mode if item.mode is defined else '0644' }}"
+  with_items:
+    - {
+      src: postfix/main.cf,
+      dest: /etc/postfix/main.cf
+    }
+    - {
+      src: postfix/master.cf,
+      dest: /etc/postfix/master.cf
+    }
+    - {
+      src: opendkim/etc/opendkim.conf,
+      dest: /etc/opendkim.conf
+    }
+    - {
+      src: opendkim/etc/opendkim/KeyTable,
+      dest: /etc/opendkim/KeyTable,
+      owner: opendkim,
+      group: opendkim,
+      mode: '0640'
+    }
+    - {
+      src: opendkim/etc/opendkim/SigningTable,
+      dest: /etc/opendkim/SigningTable,
+      owner: opendkim,
+      group: opendkim,
+      mode: '0640'
+    }
+    - {
+      src: opendkim/etc/opendkim/TrustedHosts,
+      dest: /etc/opendkim/TrustedHosts,
+      owner: opendkim,
+      group: opendkim,
+      mode: '0640'
+    }
+    - {
+      src: dovecot/etc/conf.d/10-mail.conf,
+      dest: /etc/dovecot/conf.d/10-mail.conf
+    }
+    - {
+      src: dovecot/etc/conf.d/10-ssl.conf,
+      dest: /etc/dovecot/conf.d/10-ssl.conf
+    }
+    - {
+      src: dovecot/etc/conf.d/10-master.conf,
+      dest: /etc/dovecot/conf.d/10-master.conf
+    }
+
+- name: Restart and enable services
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: restarted
+    enabled: true
+  with_items:
+    - postfix
+    - dovecot
+    - opendkim

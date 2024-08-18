@@ -1,0 +1,6 @@
+---
+- hosts: "{{ myhost }}"
+  remote_user: ansible
+  become: true
+  roles:
+    - mailserver
