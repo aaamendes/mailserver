@@ -16,15 +16,11 @@ Role Variables
 | --- | --- | --- |
 | debug | bool | Set to `true` for some extra info. |
 | mxdomain | string | Your mx record domain. |
-| domain | string | Your mailfrom domain. By default the subdomain is cut.
-|
+| domain | string | Your mailfrom domain. By default the subdomain is cut. |
 | certbot_email | string | Your email for registration with letsencrypt. |
 | certbot_flags | string | Should be fine as it is. |
-| dkim_selector | string | Set it to what you like. It's the selector for
-dkim, could also be something like YYYYMMDD, e.g. 20240818. The path to
-your public key will be `/etc/opendkim/keys/mailfromdomain/20240818.txt` |
-|fullchain_path | string | Should be fine as it is. It's where letsencrypt
-saves your certificate |
+| dkim_selector | string | Set it to what you like. It's the selector for dkim, could also be something like YYYYMMDD, e.g. 20240818. The path to your public key will be `/etc/opendkim/keys/mailfromdomain/20240818.txt` |
+|fullchain_path | string | Should be fine as it is. It's where letsencrypt saves your certificate |
 | privkey_path | string | Same as above. |
 
 Dependencies
