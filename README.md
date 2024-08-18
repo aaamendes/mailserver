@@ -6,6 +6,8 @@ A letsencrypt certificate will be requested using **standalone** method.
 Make sure port 80 isn't used on your new mailserver
 while running the playbook.
 
+<img src="https://img.shields.io/badge/License-MIT-blue.svg">
+
 ### Tested on
 [![Rocky Linux](https://img.shields.io/badge/Rocky%20Linux-10B981?logo=rockylinux&logoColor=fff)](#)
 
@@ -33,11 +35,6 @@ Example Playbook
 ----------------
 
 See `tests/test.yml`.
-
-License
--------
-
-GPL-3.0-only
 
 Author Information
 ------------------
