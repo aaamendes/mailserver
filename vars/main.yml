@@ -7,7 +7,7 @@ debug: true
 #   Letsencrypt                                                           #
 ###########################################################################
 mxdomain: mail.yourdomain.com
-# Cut subdomain for variable {{ domain }}.
+# Cut subdomain for variable {{ mxdomain }}.
 domain: "{{ mxdomain | regex_replace('^.+?\\.(.*)', '\\1') }}"
 # Set your email with certbot here.
 certbot_email: certbot@yourdomain.com
