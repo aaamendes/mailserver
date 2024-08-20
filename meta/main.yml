@@ -1,6 +1,6 @@
 galaxy_info:
   author: Albert J. Mendes
-  description: mailserver with postfix, dovecot, opendkim
+  description: mailserver with postfix, dovecot, opendkim, letsencrypt
   company:
 
   # If the issue tracker for your role is not on github, uncomment the
